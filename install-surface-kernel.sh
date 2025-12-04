@@ -107,9 +107,34 @@ echo "✓ Boot entry created: $BOOT_ENTRY"
 
 # Step 7: Set as default boot entry
 echo ""
-echo "[7/7] Setting Surface kernel as default boot option..."
+echo "[7/8] Setting Surface kernel as default boot option..."
 bootctl set-default Pop_OS-surface.conf
 echo "✓ Default boot entry set"
+
+# Step 8: Set up automatic updates
+echo ""
+echo "[8/8] Setting up automatic kernel updates..."
+
+# Check if update-surface-kernel.sh exists in current directory
+UPDATE_SCRIPT_SOURCE="$(dirname "$(readlink -f "$0")")/update-surface-kernel.sh"
+
+if [ -f "$UPDATE_SCRIPT_SOURCE" ]; then
+    # Copy update script to system path
+    cp "$UPDATE_SCRIPT_SOURCE" /usr/local/bin/update-surface-kernel.sh
+    chmod +x /usr/local/bin/update-surface-kernel.sh
+    echo "✓ Update script installed to /usr/local/bin/"
+    
+    # Create APT hook
+    cat > /etc/apt/apt.conf.d/90surface-kernel << 'EOF'
+DPkg::Post-Invoke {
+    "if [ -x /usr/local/bin/update-surface-kernel.sh ] && dpkg -l | grep -q linux-image-surface; then /usr/local/bin/update-surface-kernel.sh; fi";
+};
+EOF
+    echo "✓ APT hook created - kernel will auto-update after apt upgrade"
+else
+    echo "⚠ Warning: update-surface-kernel.sh not found in script directory"
+    echo "  Automatic updates not configured. You can set this up manually later."
+fi
 
 # Verify installation
 echo ""

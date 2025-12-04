@@ -45,13 +45,34 @@ fi
 
 # Set default kernel back to Pop_OS-current
 echo ""
-echo "[2/3] Setting Pop!_OS default kernel as boot default..."
+echo "[2/4] Setting Pop!_OS default kernel as boot default..."
 bootctl set-default Pop_OS-current.conf
 echo "✓ Default boot entry set to Pop_OS-current.conf"
 
+# Remove automatic update configuration
+echo ""
+echo "[3/4] Removing automatic update configuration..."
+
+APT_HOOK="/etc/apt/apt.conf.d/90surface-kernel"
+UPDATE_SCRIPT="/usr/local/bin/update-surface-kernel.sh"
+
+if [ -f "$APT_HOOK" ]; then
+    rm "$APT_HOOK"
+    echo "✓ APT hook removed"
+else
+    echo "✓ No APT hook found"
+fi
+
+if [ -f "$UPDATE_SCRIPT" ]; then
+    rm "$UPDATE_SCRIPT"
+    echo "✓ Update script removed"
+else
+    echo "✓ No update script found"
+fi
+
 # Ask about removing packages
 echo ""
-echo "[3/3] Remove Surface kernel packages?"
+echo "[4/4] Remove Surface kernel packages?"
 echo "This will uninstall the Surface kernel but keep the repository configured."
 read -p "Remove packages? (y/N): " -n 1 -r
 echo ""
