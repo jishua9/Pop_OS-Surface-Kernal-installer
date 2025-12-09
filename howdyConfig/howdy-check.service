@@ -1,0 +1,12 @@
+[Unit]
+Description=Verify Howdy dependencies before GDM
+Before=gdm.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/howdy-precheck.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

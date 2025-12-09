@@ -87,13 +87,43 @@ fi
 
 echo ""
 echo "=========================================="
-echo "Uninstallation Complete!"
+echo "Surface Kernel Uninstallation Complete!"
 echo "=========================================="
 echo ""
 echo "The system will now boot with the default Pop!_OS kernel."
 echo ""
 echo "Current boot entries:"
 bootctl list | grep -E "title:|id:" | head -10
+echo ""
+
+# Check if Howdy is installed and offer to remove it
+HOWDY_UNINSTALL="$(dirname "$(readlink -f "$0")")/uninstall-howdy.sh"
+
+if dpkg -l | grep -q "^ii.*howdy" || [ -f /etc/pam.d/gdm-password ] && grep -q "howdy" /etc/pam.d/gdm-password 2>/dev/null; then
+    echo ""
+    echo "=========================================="
+    echo "Howdy Facial Recognition Detected"
+    echo "=========================================="
+    echo ""
+    read -p "Would you also like to remove Howdy facial recognition? (y/N): " REMOVE_HOWDY
+    if [[ "$REMOVE_HOWDY" =~ ^[Yy]$ ]]; then
+        if [ -f "$HOWDY_UNINSTALL" ]; then
+            bash "$HOWDY_UNINSTALL"
+        else
+            echo "Howdy uninstaller not found. Removing manually..."
+            # Disable in PAM
+            sed -i '/pam_python.so.*howdy/d' /etc/pam.d/gdm-password 2>/dev/null || true
+            # Remove safety service
+            systemctl disable howdy-check.service 2>/dev/null || true
+            rm -f /etc/systemd/system/howdy-check.service
+            rm -f /usr/local/bin/howdy-precheck.sh
+            rm -f /usr/local/bin/howdy-diagnose.py
+            systemctl daemon-reload
+            echo "✓ Howdy disabled"
+        fi
+    fi
+fi
+
 echo ""
 echo "Please reboot to switch back to the Pop!_OS kernel."
 echo "To reboot now, run: sudo reboot"

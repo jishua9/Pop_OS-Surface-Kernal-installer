@@ -1,12 +1,18 @@
-# Surface Kernel Automation Scripts for Pop!_OS
+# Surface Kernel & Howdy Automation Scripts for Pop!_OS
 
-These scripts automate the installation, updating, and removal of the Linux Surface kernel on Pop!_OS systems.
+These scripts automate the installation, updating, and removal of the Linux Surface kernel on Pop!_OS systems, including optional Howdy facial recognition setup.
 
 ## Scripts Included
 
-1. **install-surface-kernel.sh** - Initial installation script
+### Kernel Scripts
+1. **install-surface-kernel.sh** - Initial installation script (includes optional Howdy setup)
 2. **update-surface-kernel.sh** - Update script for kernel upgrades
 3. **uninstall-surface-kernel.sh** - Remove Surface kernel and revert to Pop!_OS kernel
+
+### Howdy Facial Recognition Scripts
+4. **install-howdy.sh** - Standalone Howdy installer for Surface IR cameras
+5. **uninstall-howdy.sh** - Remove Howdy and restore password-only login
+6. **howdyConfig/** - Configuration files and safety services
 
 ## Prerequisites
 
@@ -95,6 +101,95 @@ Installing the Surface kernel fixes these hardware issues:
 - ✓ Improved suspend/resume
 - ✓ Better thermal management
 - ✓ Surface-specific hardware quirks
+- ✓ IR camera support (for Howdy facial recognition)
+
+## Howdy Facial Recognition
+
+Surface devices include an IR camera that enables Windows Hello-style facial recognition. Howdy brings this feature to Linux.
+
+### Installing Howdy
+
+Howdy installation is offered automatically at the end of the kernel installation. You can also install it separately:
+
+```bash
+sudo ./install-howdy.sh
+```
+
+This will:
+1. Install Howdy and the face-recognition Python library
+2. Auto-detect your Surface IR camera
+3. Configure optimal settings for Surface devices
+4. Set up PAM for facial recognition with password fallback
+5. Install a boot-time safety service to prevent lockouts
+6. Guide you through adding your face model
+
+### How Howdy Works
+
+1. At the login screen, the IR camera activates
+2. Howdy attempts facial recognition for 4 seconds
+3. If your face is recognized, you're logged in automatically
+4. If not recognized or timeout, password prompt appears
+
+### Howdy Commands
+
+```bash
+sudo howdy add              # Add a new face model
+sudo howdy add -l office    # Add face model with label
+sudo howdy list             # List saved face models
+sudo howdy remove           # Remove a face model
+sudo howdy test             # Test camera and face detection
+sudo howdy config           # Edit Howdy configuration
+```
+
+### Adding Multiple Face Models
+
+For better recognition in different conditions, add multiple face models:
+
+```bash
+sudo howdy add -l front     # Looking straight ahead
+sudo howdy add -l left      # Slight turn left
+sudo howdy add -l right     # Slight turn right
+sudo howdy add -l glasses   # With glasses on/off
+```
+
+### Howdy Configuration
+
+Default settings optimized for Surface devices:
+- **Device**: `/dev/video2` (IR camera)
+- **Timeout**: 4 seconds
+- **Certainty**: 4.5 (1-10 scale, lower = stricter)
+
+To adjust settings:
+```bash
+sudo howdy config
+```
+
+### Troubleshooting Howdy
+
+**Face not recognized:**
+- Add more face models from different angles
+- Increase certainty value (e.g., 5.0 or 5.5)
+- Ensure good lighting
+
+**Howdy hangs at login:**
+- The safety service should prevent this
+- If stuck, press Ctrl+Alt+F3 for TTY, login, and run:
+  ```bash
+  sudo sed -i '/pam_python.so.*howdy/d' /etc/pam.d/gdm-password
+  ```
+
+**Run diagnostics:**
+```bash
+sudo python3 /usr/local/bin/howdy-diagnose.py
+```
+
+### Uninstalling Howdy
+
+```bash
+sudo ./uninstall-howdy.sh
+```
+
+Or remove during kernel uninstallation (you'll be prompted).
 
 ## Automation Options
 
