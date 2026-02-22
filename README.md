@@ -14,6 +14,11 @@ These scripts automate the installation, updating, and removal of the Linux Surf
 5. **uninstall-howdy.sh** - Remove Howdy and restore password-only login
 6. **howdyConfig/** - Configuration files and safety services
 
+### Battery Optimization Scripts
+7. **install-battery.sh** - Battery optimization installer (auto-cpufreq, powertop, Surface tuning)
+8. **uninstall-battery.sh** - Remove battery optimizations and revert to defaults
+9. **batteryConfig/** - Configuration files and systemd services
+
 ## Prerequisites
 
 - Pop!_OS 22.04 or later
@@ -187,6 +192,70 @@ sudo python3 /usr/local/bin/howdy-diagnose.py
 
 ```bash
 sudo ./uninstall-howdy.sh
+```
+
+Or remove during kernel uninstallation (you'll be prompted).
+
+## Battery Optimization
+
+Surface devices on Linux can drain battery faster than on Windows due to missing power management tuning. The battery optimization suite addresses this with three layers of power management.
+
+### Installing Battery Optimization
+
+Battery optimization is offered automatically at the end of the kernel installation. You can also install it separately:
+
+```bash
+sudo ./install-battery.sh
+```
+
+This will:
+1. Install **auto-cpufreq** for dynamic CPU frequency and governor management
+2. Set up **powertop auto-tune** as a persistent systemd service
+3. Install **Surface-specific power tuning** for USB wake, NVMe, PCI, and audio
+
+### How It Works
+
+1. **auto-cpufreq** continuously adjusts CPU governor and turbo boost based on power source and load
+   - On charger: `performance` governor, turbo enabled
+   - On battery: `powersave` governor, turbo disabled
+2. **powertop auto-tune** applies device power optimizations at every boot
+3. **Surface power tuning** handles hardware-specific settings:
+   - Disables USB wake devices (prevents phantom wakes)
+   - Enables NVMe power saving (APST)
+   - Sets PCI runtime PM to auto
+   - Configures SATA link power management
+   - Enables audio codec power save
+
+### Battery Commands
+
+```bash
+sudo auto-cpufreq --stats              # View current power management stats
+sudo powertop                           # Interactive power analysis
+systemctl status auto-cpufreq           # Check auto-cpufreq service
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor  # Check current governor
+upower -i /org/freedesktop/UPower/devices/battery_BAT0     # Check battery health
+```
+
+### Troubleshooting Battery
+
+**Battery still draining fast:**
+- Run `sudo powertop` to identify power-hungry processes
+- Check that auto-cpufreq is running: `systemctl status auto-cpufreq`
+- Verify governor is `powersave` on battery (not `performance`)
+
+**Want to disable Bluetooth at boot:**
+- Create `/etc/surface-power-tune.conf` with `DISABLE_BT_ON_BOOT=true`
+
+**Check battery health:**
+```bash
+upower -i /org/freedesktop/UPower/devices/battery_BAT0
+```
+Compare `energy-full` vs `energy-full-design` — significant degradation means software tuning has limited impact.
+
+### Uninstalling Battery Optimization
+
+```bash
+sudo ./uninstall-battery.sh
 ```
 
 Or remove during kernel uninstallation (you'll be prompted).

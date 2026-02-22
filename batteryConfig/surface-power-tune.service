@@ -1,0 +1,11 @@
+[Unit]
+Description=Surface device power tuning at boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/surface-power-tune.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

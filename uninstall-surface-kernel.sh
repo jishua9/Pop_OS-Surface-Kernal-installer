@@ -96,6 +96,37 @@ echo "Current boot entries:"
 bootctl list | grep -E "title:|id:" | head -10
 echo ""
 
+# Check if battery optimization is installed and offer to remove it
+BATTERY_UNINSTALL="$(dirname "$(readlink -f "$0")")/uninstall-battery.sh"
+
+if systemctl is-enabled powertop-autotune.service >/dev/null 2>&1 || \
+   systemctl is-enabled surface-power-tune.service >/dev/null 2>&1 || \
+   systemctl is-enabled auto-cpufreq >/dev/null 2>&1; then
+    echo ""
+    echo "=========================================="
+    echo "Battery Optimization Detected"
+    echo "=========================================="
+    echo ""
+    read -p "Would you also like to remove battery optimizations? (y/N): " REMOVE_BATTERY
+    if [[ "$REMOVE_BATTERY" =~ ^[Yy]$ ]]; then
+        if [ -f "$BATTERY_UNINSTALL" ]; then
+            bash "$BATTERY_UNINSTALL"
+        else
+            echo "Battery uninstaller not found. Removing manually..."
+            systemctl disable powertop-autotune.service 2>/dev/null || true
+            systemctl disable surface-power-tune.service 2>/dev/null || true
+            systemctl stop auto-cpufreq 2>/dev/null || true
+            systemctl disable auto-cpufreq 2>/dev/null || true
+            rm -f /etc/systemd/system/powertop-autotune.service
+            rm -f /etc/systemd/system/surface-power-tune.service
+            rm -f /usr/local/bin/surface-power-tune.sh
+            rm -f /etc/auto-cpufreq.conf
+            systemctl daemon-reload
+            echo "✓ Battery optimizations removed"
+        fi
+    fi
+fi
+
 # Check if Howdy is installed and offer to remove it
 HOWDY_UNINSTALL="$(dirname "$(readlink -f "$0")")/uninstall-howdy.sh"
 

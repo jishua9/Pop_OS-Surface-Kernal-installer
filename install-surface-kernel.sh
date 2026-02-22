@@ -186,6 +186,40 @@ else
     echo "  You can install Howdy manually later."
 fi
 
+# Step 10: Optional Battery Optimization
+echo ""
+echo "=========================================="
+echo "Battery Optimization (Optional)"
+echo "=========================================="
+echo ""
+echo "Surface devices benefit significantly from power management"
+echo "tuning to extend battery life."
+echo ""
+echo "This will:"
+echo "  - Install auto-cpufreq for dynamic CPU power management"
+echo "  - Set up powertop auto-tune as a persistent service"
+echo "  - Apply Surface-specific power optimizations (USB, NVMe, PCI)"
+echo ""
+
+BATTERY_SCRIPT="$(dirname "$(readlink -f "$0")")/install-battery.sh"
+
+if [ -f "$BATTERY_SCRIPT" ]; then
+    read -p "Would you like to install battery optimizations? (y/N): " INSTALL_BATTERY
+    if [[ "$INSTALL_BATTERY" =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "Starting battery optimization setup..."
+        echo ""
+        bash "$BATTERY_SCRIPT"
+    else
+        echo ""
+        echo "Skipping battery optimization."
+        echo "You can install it later by running: sudo ./install-battery.sh"
+    fi
+else
+    echo "⚠ Battery optimizer not found at: $BATTERY_SCRIPT"
+    echo "  You can install battery optimizations manually later."
+fi
+
 # Final summary
 echo ""
 echo "=========================================="
