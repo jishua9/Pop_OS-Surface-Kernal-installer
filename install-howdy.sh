@@ -183,6 +183,17 @@ else
     exit 1
 fi
 
+# Restrict Howdy to GDM login only — the howdy package adds itself to
+# /etc/pam.d/common-auth, which causes the IR camera to activate on every
+# sudo, polkit prompt, screen unlock, su, etc. Strip it so only gdm-password
+# triggers facial recognition.
+COMMON_AUTH="/etc/pam.d/common-auth"
+if [[ -f "$COMMON_AUTH" ]] && grep -q "pam_python.so.*howdy" "$COMMON_AUTH"; then
+    cp "$COMMON_AUTH" "${COMMON_AUTH}.backup.$(date +%Y%m%d_%H%M%S)"
+    sed -i '/pam_python.so.*howdy/d' "$COMMON_AUTH"
+    success "Removed Howdy from common-auth (GDM login only)"
+fi
+
 # Step 6: Install safety service
 echo ""
 echo "[6/8] Installing boot-time safety service..."

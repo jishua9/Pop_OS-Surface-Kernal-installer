@@ -61,6 +61,14 @@ else
     warn "PAM file not found at $PAM_FILE"
 fi
 
+# Also strip Howdy from common-auth in case the package added it back
+COMMON_AUTH="/etc/pam.d/common-auth"
+if [[ -f "$COMMON_AUTH" ]] && grep -q "pam_python.so.*howdy" "$COMMON_AUTH"; then
+    cp "$COMMON_AUTH" "${COMMON_AUTH}.backup.$(date +%Y%m%d_%H%M%S)"
+    sed -i '/pam_python.so.*howdy/d' "$COMMON_AUTH"
+    success "Howdy removed from common-auth"
+fi
+
 # Step 2: Remove safety service
 echo ""
 echo "[2/4] Removing boot-time safety service..."
