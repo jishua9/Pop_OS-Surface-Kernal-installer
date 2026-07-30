@@ -46,10 +46,23 @@ KERNEL_VERSION=$(basename "$SURFACE_KERNEL" | sed 's/vmlinuz-//')
 echo "Latest Surface kernel: $KERNEL_VERSION"
 echo ""
 
+# Re-assert the Surface entry as the default boot option. Pop!_OS kernel
+# updates run kernelstub, which resets the systemd-boot default back to
+# Pop_OS-current.conf — without this, the machine silently reverts to the
+# generic kernel on the next reboot.
+BOOT_ENTRY="${ESP_PATH}/loader/entries/Pop_OS-surface.conf"
+if [ -f "$BOOT_ENTRY" ]; then
+    bootctl set-default Pop_OS-surface.conf
+    echo "✓ Pop_OS-surface.conf asserted as default boot entry"
+else
+    echo "⚠ Boot entry $BOOT_ENTRY not found — run install-surface-kernel.sh to recreate it"
+fi
+echo ""
+
 # Check if update is needed
 if [ "$CURRENT_KERNEL" == "$KERNEL_VERSION" ]; then
     echo "You are already running the latest Surface kernel."
-    echo "No update needed."
+    echo "Boot files are up to date. No update needed."
     exit 0
 fi
 

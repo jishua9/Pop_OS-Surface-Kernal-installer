@@ -9,11 +9,11 @@ Surface Kernel Automation Suite for Pop!_OS. Automates installation, updating, a
 ## Repository Structure
 
 - **install-surface-kernel.sh** — 8-step kernel installer: adds linux-surface APT repo, installs kernel packages, configures systemd-boot (not GRUB), sets up APT hook for automatic updates, optionally triggers Howdy setup
-- **update-surface-kernel.sh** — Detects new kernel versions, backs up current files, copies to ESP partition
+- **update-surface-kernel.sh** — Detects new kernel versions, backs up current files, copies to ESP partition; re-asserts `Pop_OS-surface.conf` as the systemd-boot default on every run (Pop kernel updates run kernelstub, which steals the default back to `Pop_OS-current.conf`)
 - **uninstall-surface-kernel.sh** — Removes boot entry, resets default kernel, cleans up APT hook, optionally removes packages
 - **install-howdy.sh** — Standalone Howdy installer: IR camera detection, PAM configuration, safety service, face enrollment
 - **uninstall-howdy.sh** — Disables Howdy PAM, removes safety service, optionally removes packages
-- **howdyConfig/** — Systemd service (`howdy-check.service`), boot safety script (`howdy-precheck.sh`), diagnostic tool (`howdy-diagnose.py`)
+- **howdyConfig/** — Systemd service (`howdy-check.service`), boot safety script (`howdy-precheck.sh`), diagnostic tool (`howdy-diagnose.py`), opt-in terminal face-auth wrapper (`sudof` + `howdy-trigger-check.sh` pam_exec gate)
 - **install-battery.sh** — Battery optimization installer: auto-cpufreq, powertop auto-tune, Surface power tuning
 - **uninstall-battery.sh** — Removes battery optimization services and optionally packages
 - **batteryConfig/** — auto-cpufreq config, systemd services (`powertop-autotune.service`, `surface-power-tune.service`), Surface power tuning script

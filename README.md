@@ -326,6 +326,28 @@ Just reboot when convenient, and you'll be on the new kernel!
 
 ## Troubleshooting
 
+### System Reverts to the Generic Pop!_OS Kernel
+
+Pop!_OS kernel updates run `kernelstub`, which resets the systemd-boot default entry back to `Pop_OS-current.conf`. Symptoms: touchscreen, pen, and Howdy stop working after a reboot, and `uname -r` shows a `-generic` kernel instead of `-surface`.
+
+`update-surface-kernel.sh` now re-asserts `Pop_OS-surface.conf` as the default on every run (including via the APT hook), so this self-heals after any `apt upgrade`. To fix it immediately:
+
+```bash
+sudo bootctl set-default Pop_OS-surface.conf
+sudo reboot
+```
+
+### Cursor Flickering / Disappearing (DisplayLink evdi)
+
+If the DisplayLink driver is installed, its `evdi` module creates 4 phantom virtual displays at boot (`initial_device_count=4` in `/etc/modprobe.d/evdi.conf`), which attach to Xorg as extra GPU providers and break hardware-cursor handling — even with no DisplayLink device plugged in. Fix (keeps DisplayLink docks working on hotplug):
+
+```bash
+sudo sed -i 's/initial_device_count=4/initial_device_count=0/' /etc/modprobe.d/evdi.conf
+sudo reboot
+```
+
+Verify with `xrandr | grep DVI-I` (should be empty) and `xrandr --listproviders` (should show 1 provider). Note: a DisplayLink driver update may rewrite this file — reapply if the flicker returns after an upgrade.
+
 ### Boot Issues
 
 If you can't boot after installation:
