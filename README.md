@@ -176,6 +176,14 @@ sudo howdy config
 - Increase certainty value (e.g., 5.0 or 5.5)
 - Ensure good lighting
 
+**Howdy silently falls back to password ("Failure, image too dark" in journal):**
+- The IR frames are failing Howdy's darkness filter — common after kernel updates change camera exposure behaviour (seen on linux-surface 6.19.x)
+- Check with `journalctl -b | grep -i "too dark"` and `sudo howdy test`
+- Fix: raise the threshold in `/lib/security/howdy/config.ini`:
+  ```bash
+  sudo sed -i 's/^dark_threshold.*/dark_threshold = 90/' /lib/security/howdy/config.ini
+  ```
+
 **Howdy hangs at login:**
 - The safety service should prevent this
 - If stuck, press Ctrl+Alt+F3 for TTY, login, and run:

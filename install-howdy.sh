@@ -138,8 +138,9 @@ if [[ -f "$HOWDY_CONFIG" ]]; then
     # Set certainty (4.5 is a good balance for Surface IR cameras)
     sed -i 's/^certainty.*/certainty = 4.5/' "$HOWDY_CONFIG"
 
-    # Set dark threshold
-    sed -i 's/^dark_threshold.*/dark_threshold = 50/' "$HOWDY_CONFIG"
+    # Set dark threshold — Surface IR frames read darker on linux-surface
+    # 6.19.x; 50 rejects every frame ("Failure, image too dark" at login)
+    sed -i 's/^dark_threshold.*/dark_threshold = 90/' "$HOWDY_CONFIG"
 
     # Disable detection notice (cleaner login)
     sed -i 's/^detection_notice.*/detection_notice = false/' "$HOWDY_CONFIG"
