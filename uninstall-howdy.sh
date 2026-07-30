@@ -61,13 +61,22 @@ else
     warn "PAM file not found at $PAM_FILE"
 fi
 
-# Also strip Howdy from common-auth in case the package added it back
-COMMON_AUTH="/etc/pam.d/common-auth"
-if [[ -f "$COMMON_AUTH" ]] && grep -q "pam_python.so.*howdy" "$COMMON_AUTH"; then
-    cp "$COMMON_AUTH" "${COMMON_AUTH}.backup.$(date +%Y%m%d_%H%M%S)"
-    sed -i '/pam_python.so.*howdy/d' "$COMMON_AUTH"
-    success "Howdy removed from common-auth"
-fi
+# Also strip Howdy from common-auth, polkit-1, and sudo
+for f in /etc/pam.d/common-auth /etc/pam.d/polkit-1 /etc/pam.d/sudo; do
+    if [[ -f "$f" ]] && grep -qE "pam_python.so.*howdy|howdy-trigger-check" "$f"; then
+        cp "$f" "${f}.backup.$(date +%Y%m%d_%H%M%S)"
+        sed -i '/pam_python.so.*howdy/d; /howdy-trigger-check/d' "$f"
+        success "Howdy removed from $f"
+    fi
+done
+
+# Remove sudof wrapper and trigger-check helper
+for bin in /usr/local/bin/sudof /usr/local/bin/howdy-trigger-check; do
+    if [[ -f "$bin" ]]; then
+        rm "$bin"
+        success "Removed $bin"
+    fi
+done
 
 # Step 2: Remove safety service
 echo ""

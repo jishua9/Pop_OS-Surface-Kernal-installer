@@ -1,0 +1,5 @@
+#!/bin/bash
+# sudo + Howdy facial recognition. Plain `sudo` is password-only;
+# `sudof` sets HOWDY_TERMINAL=1 so /etc/pam.d/sudo's pam_exec gate
+# allows the Howdy auth line to run.
+HOWDY_TERMINAL=1 exec sudo "$@"

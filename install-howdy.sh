@@ -183,15 +183,48 @@ else
     exit 1
 fi
 
-# Restrict Howdy to GDM login only — the howdy package adds itself to
-# /etc/pam.d/common-auth, which causes the IR camera to activate on every
-# sudo, polkit prompt, screen unlock, su, etc. Strip it so only gdm-password
-# triggers facial recognition.
+# Strip Howdy from common-auth — the howdy package adds itself there, which
+# would activate the IR camera on every sudo/polkit/su/unlock. We wire Howdy
+# into specific PAM files below instead.
 COMMON_AUTH="/etc/pam.d/common-auth"
 if [[ -f "$COMMON_AUTH" ]] && grep -q "pam_python.so.*howdy" "$COMMON_AUTH"; then
     cp "$COMMON_AUTH" "${COMMON_AUTH}.backup.$(date +%Y%m%d_%H%M%S)"
     sed -i '/pam_python.so.*howdy/d' "$COMMON_AUTH"
-    success "Removed Howdy from common-auth (GDM login only)"
+    success "Removed Howdy from common-auth"
+fi
+
+# Add Howdy to polkit-1 so GUI privilege prompts use facial recognition
+POLKIT_PAM="/etc/pam.d/polkit-1"
+if [[ -f "$POLKIT_PAM" ]]; then
+    cp "$POLKIT_PAM" "${POLKIT_PAM}.backup.$(date +%Y%m%d_%H%M%S)"
+    sed -i '/pam_python.so.*howdy/d' "$POLKIT_PAM"
+    if grep -q "@include common-auth" "$POLKIT_PAM"; then
+        sed -i '/@include common-auth/i auth sufficient pam_python.so /lib/security/howdy/pam.py' "$POLKIT_PAM"
+        success "Howdy enabled for polkit GUI prompts"
+    else
+        warn "Could not find @include common-auth in $POLKIT_PAM — skipping polkit integration"
+    fi
+fi
+
+# Install gated Howdy for sudo: only triggers when invoked via the sudof
+# wrapper (which sets HOWDY_TERMINAL=1). Plain `sudo` stays password-only.
+log "Installing sudof wrapper and Howdy gate for sudo..."
+install -m 0755 "${HOWDY_CONFIG_DIR}/howdy-trigger-check.sh" /usr/local/bin/howdy-trigger-check
+install -m 0755 "${HOWDY_CONFIG_DIR}/sudof" /usr/local/bin/sudof
+
+SUDO_PAM="/etc/pam.d/sudo"
+if [[ -f "$SUDO_PAM" ]]; then
+    cp "$SUDO_PAM" "${SUDO_PAM}.backup.$(date +%Y%m%d_%H%M%S)"
+    # Remove any prior Howdy/gate lines so re-running this script is idempotent
+    sed -i '/pam_python.so.*howdy/d; /howdy-trigger-check/d' "$SUDO_PAM"
+    # Insert gate + Howdy at the top of the auth stack
+    {
+        echo 'auth [success=ignore default=1] pam_exec.so quiet /usr/local/bin/howdy-trigger-check'
+        echo 'auth sufficient pam_python.so /lib/security/howdy/pam.py'
+        cat "$SUDO_PAM"
+    } > "${SUDO_PAM}.new" && mv "${SUDO_PAM}.new" "$SUDO_PAM"
+    chmod 644 "$SUDO_PAM"
+    success "sudof wrapper installed — run 'sudof <cmd>' to use Howdy in terminal"
 fi
 
 # Step 6: Install safety service
