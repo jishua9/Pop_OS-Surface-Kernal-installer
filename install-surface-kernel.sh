@@ -108,7 +108,9 @@ echo "✓ Boot entry created: $BOOT_ENTRY"
 # Step 7: Set as default boot entry
 echo ""
 echo "[7/8] Setting Surface kernel as default boot option..."
-bootctl set-default Pop_OS-surface.conf
+# Lowercase id: systemd-boot lowercases entry ids at boot and matches
+# LoaderEntryDefault case-sensitively — mixed case is silently ignored.
+bootctl set-default pop_os-surface.conf
 echo "✓ Default boot entry set"
 
 # Step 8: Set up automatic updates

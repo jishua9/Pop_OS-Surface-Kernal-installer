@@ -50,10 +50,13 @@ echo ""
 # updates run kernelstub, which resets the systemd-boot default back to
 # Pop_OS-current.conf — without this, the machine silently reverts to the
 # generic kernel on the next reboot.
+# NOTE: the id must be lowercase — systemd-boot lowercases entry ids at boot
+# and matches LoaderEntryDefault case-sensitively, so a mixed-case id is
+# silently ignored (userspace bootctl misleadingly still shows it as default).
 BOOT_ENTRY="${ESP_PATH}/loader/entries/Pop_OS-surface.conf"
 if [ -f "$BOOT_ENTRY" ]; then
-    bootctl set-default Pop_OS-surface.conf
-    echo "✓ Pop_OS-surface.conf asserted as default boot entry"
+    bootctl set-default pop_os-surface.conf
+    echo "✓ pop_os-surface.conf asserted as default boot entry"
 else
     echo "⚠ Boot entry $BOOT_ENTRY not found — run install-surface-kernel.sh to recreate it"
 fi
