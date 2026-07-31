@@ -345,6 +345,17 @@ sudo bootctl set-default Pop_OS-surface.conf
 sudo reboot
 ```
 
+### DisplayLink Dock Shows No Output After Switching Kernels
+
+DKMS builds the evdi module for the Surface kernel, but the kernel's `modules.dep` index can miss it if depmod ran before the DKMS install (symptom: `modprobe: FATAL: Module evdi not found in directory /lib/modules/<version>` in the journal while `displaylink-driver.service` crash-loops, even though DKMS reports the module as installed). Fix:
+
+```bash
+sudo depmod -a
+sudo systemctl restart displaylink-driver.service
+```
+
+Also note: `DisplayLinkManager` using a CPU core while screen content is changing (video, scrolling) is normal — DisplayLink on Linux compresses every changed pixel on the CPU. It should drop to low single digits when the screen is static. Lowering the dock monitors' refresh rate reduces the load.
+
 ### Cursor Flickering / Disappearing (DisplayLink evdi)
 
 If the DisplayLink driver is installed, its `evdi` module creates 4 phantom virtual displays at boot (`initial_device_count=4` in `/etc/modprobe.d/evdi.conf`), which attach to Xorg as extra GPU providers and break hardware-cursor handling — even with no DisplayLink device plugged in. Fix (keeps DisplayLink docks working on hotplug):
